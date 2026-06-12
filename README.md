@@ -28,8 +28,23 @@ Execute the following command to install the required third party libraries:
 3. Run this command to start the application
 
     ```cd todo_project```
-
+    
     ```python run.py```
+
+# Docker
+
+Build and run the container locally:
+
+```bash
+docker build -t task-manager-flask .
+docker run -p 5000:5000 task-manager-flask
+```
+
+Or use Docker Compose:
+
+```bash
+docker compose up --build
+```
 
 # Results
 
@@ -62,4 +77,3 @@ Click the **View All Task** link in the side-bar to see all tasks. You can **Upd
 Change your username and password. You can access this by clicking dropdown in the Navbar
 
 ![Image of Yaktocat](output/account-settings.jpg)
-

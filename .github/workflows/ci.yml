@@ -65,3 +65,60 @@ jobs:
       - name: Stop application container
         if: always()
         run: docker stop task-app-ci
+
+  bandit-sast:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.9"
+          cache: "pip"
+
+      - name: Install Bandit
+        run: python -m pip install --upgrade pip bandit Jinja2
+
+      - name: Run Bandit
+        run: |
+          mkdir -p bandit-report
+          bandit -r todo_project -lll -x tests -f html -o bandit-report/bandit-report.html
+
+      - name: Upload Bandit report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bandit-report
+          path: bandit-report/
+          if-no-files-found: warn
+
+  dependency-check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run OWASP Dependency-Check
+        continue-on-error: true
+        run: |
+          mkdir -p dependency-check-report
+          docker run --rm \
+            -v "${PWD}:/src" \
+            -v "${PWD}/dependency-check-report:/report" \
+            owasp/dependency-check:latest \
+            --project "Task-Manager-using-Flask" \
+            --scan /src/requirements.txt \
+            --format HTML \
+            --out /report
+
+      - name: Upload Dependency-Check report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dependency-check-report
+          path: dependency-check-report/
+          if-no-files-found: warn

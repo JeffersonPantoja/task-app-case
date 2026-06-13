@@ -1,0 +1,64 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - desenvolvimento
+      - stagio
+      - producao
+    tags:
+      - "v*"
+  pull_request:
+    branches:
+      - desenvolvimento
+      - stagio
+      - producao
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.9"
+          cache: "pip"
+
+      - name: Install dependencies
+        working-directory: todo_project
+        run: pip install -r ../requirements.txt
+
+      - name: Validate application import
+        working-directory: todo_project
+        run: python -c "from todo_project import app; print(app.name)"
+
+      - name: Check dependency consistency
+        working-directory: todo_project
+        run: pip check
+
+      - name: Build Docker image
+        run: docker build -t task-app-ci .
+
+      - name: Start application container
+        run: docker run -d --rm --name task-app-ci -p 5000:5000 task-app-ci
+
+      - name: Wait for app to be ready
+        run: |
+          for i in $(seq 1 30); do
+            if curl --fail http://127.0.0.1:5000/; then
+              exit 0
+            fi
+            sleep 2
+          done
+          exit 1
+
+      - name: Stop application container
+        if: always()
+        run: docker stop task-app-ci

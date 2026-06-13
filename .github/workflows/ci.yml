@@ -189,13 +189,14 @@ jobs:
       - name: Wait for ZAP to be ready
         run: |
           for i in $(seq 1 60); do
-            if curl --fail --silent http://127.0.0.1:8090/ > /dev/null 2>&1; then
+            if curl --silent --max-time 5 http://127.0.0.1:8090/ > /dev/null 2>&1; then
               echo "ZAP ready"
               exit 0
             fi
             sleep 5
           done
           echo "ZAP did not start in time"
+          docker logs zap
           exit 1
 
       - name: Run app exploration script

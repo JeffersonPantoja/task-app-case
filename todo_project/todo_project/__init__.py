@@ -19,5 +19,10 @@ login_manager.login_message_category = 'danger'
 
 bcrypt = Bcrypt(app)
 
+from todo_project import models
+
+with app.app_context():
+    db.create_all()
+
 # Always put Routes at end
 from todo_project import routes

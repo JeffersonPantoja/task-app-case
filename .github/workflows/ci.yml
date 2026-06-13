@@ -108,7 +108,7 @@ jobs:
         continue-on-error: true
         with:
           project: "Task-Manager-using-Flask"
-          path: "requirements.txt"
+          path: "."
           format: "HTML"
           out: "dependency-check-report"
           args: --nvdApiKey ${{ secrets.NVD_API_KEY }}

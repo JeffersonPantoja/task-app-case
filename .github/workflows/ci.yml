@@ -4,14 +4,14 @@ on:
   push:
     branches:
       - desenvolvimento
-      - stagio
+      - estagio
       - producao
     tags:
       - "v*"
   pull_request:
     branches:
       - desenvolvimento
-      - stagio
+      - estagio
       - producao
 
 permissions:

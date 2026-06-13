@@ -144,3 +144,86 @@ jobs:
           name: pip-audit-report
           path: pip-audit-report/
           if-no-files-found: warn
+
+  zap-dast:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: docker build -t task-app-ci .
+
+      - name: Create Docker network
+        run: docker network create zap-net || true
+
+      - name: Start application container
+        run: |
+          docker run -d --rm --name web \
+            --network zap-net \
+            -p 5000:5000 \
+            task-app-ci
+
+      - name: Wait for app to be ready
+        run: |
+          for i in $(seq 1 30); do
+            if curl --fail http://127.0.0.1:5000/; then
+              exit 0
+            fi
+            sleep 2
+          done
+          exit 1
+
+      - name: Start ZAP daemon
+        run: |
+          mkdir -p zap-report
+          docker run -d --rm --name zap \
+            --network zap-net \
+            -p 8090:8090 \
+            -v ${{ github.workspace }}/zap-report:/zap/wrk/:rw \
+            ghcr.io/zaproxy/zaproxy:stable \
+            zap.sh -daemon -port 8090 -host 0.0.0.0 -config api.key=zap123
+
+      - name: Wait for ZAP to be ready
+        run: |
+          for i in $(seq 1 60); do
+            if curl --fail --silent http://127.0.0.1:8090/ > /dev/null 2>&1; then
+              echo "ZAP ready"
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "ZAP did not start in time"
+          exit 1
+
+      - name: Run app exploration script
+        run: |
+          docker run --rm --network zap-net \
+            -v ${{ github.workspace }}/zap-scan:/zap-scan:ro \
+            python:3.12-slim \
+            sh -c "pip install -q requests && python /zap-scan/explore.py"
+
+      - name: Generate ZAP report
+        run: |
+          curl -X POST "http://127.0.0.1:8090/JSON/reports/action/generate/" \
+            -d "apikey=zap123" \
+            -d "template=traditional-html" \
+            -d "sites=http://web:5000" \
+            -d "reportDir=/zap/wrk/" \
+            -d "reportName=zap-report"
+
+      - name: Upload ZAP report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: zap-report
+          path: zap-report/
+          if-no-files-found: warn
+
+      - name: Cleanup
+        if: always()
+        run: |
+          docker stop web zap || true
+          docker network rm zap-net || true

@@ -184,12 +184,15 @@ jobs:
             -p 8090:8090 \
             -v ${{ github.workspace }}/zap-report:/zap/wrk/:rw \
             ghcr.io/zaproxy/zaproxy:stable \
-            zap.sh -daemon -port 8090 -host 0.0.0.0 -config api.key=zap123
+            zap.sh -daemon -port 8090 -host 0.0.0.0 \
+            -config api.disablekey=true \
+            -config api.addrs.addr.name=.* \
+            -config api.addrs.addr.regex=true
 
       - name: Wait for ZAP to be ready
         run: |
           for i in $(seq 1 60); do
-            if curl --silent --max-time 5 http://127.0.0.1:8090/ > /dev/null 2>&1; then
+            if (echo > /dev/tcp/127.0.0.1/8090) 2>/dev/null; then
               echo "ZAP ready"
               exit 0
             fi
@@ -209,7 +212,7 @@ jobs:
       - name: Generate ZAP report
         run: |
           curl -X POST "http://127.0.0.1:8090/JSON/reports/action/generate/" \
-            -d "apikey=zap123" \
+            -d "apikey=" \
             -d "template=traditional-html" \
             -d "sites=http://web:5000" \
             -d "reportDir=/zap/wrk/" \

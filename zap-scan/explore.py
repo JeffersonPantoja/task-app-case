@@ -1,6 +1,7 @@
 import re
 import time
 import requests
+import requests.exceptions
 import urllib3
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -41,7 +42,7 @@ def wait_for_proxy():
             r = SESSION.get(f"{TARGET}/", timeout=5)
             print(f"Proxy ready (attempt {i + 1})")
             return
-        except (requests.ConnectionError, requests.ProxyError):
+        except (requests.exceptions.ConnectionError, requests.exceptions.ProxyError):
             print(f"Waiting for proxy... (attempt {i + 1})")
             time.sleep(5)
     raise RuntimeError("ZAP proxy did not become ready in time")

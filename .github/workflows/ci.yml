@@ -216,15 +216,15 @@ jobs:
 
       - name: Spider with zap-cli
         run: |
-          zap-cli --zap-url http://127.0.0.1:8090 --api-key "" spider http://web:5000
+          zap-cli --zap-url http://127.0.0.1 --port 8090 --api-key "" spider http://web:5000
 
       - name: Run Active Scan with zap-cli
         run: |
-          zap-cli --zap-url http://127.0.0.1:8090 --api-key "" active-scan http://web:5000
+          zap-cli --zap-url http://127.0.0.1 --port 8090 --api-key "" active-scan http://web:5000
 
       - name: Generate ZAP Report
         run: |
-          zap-cli --zap-url http://127.0.0.1:8090 --api-key "" report \
+          zap-cli --zap-url http://127.0.0.1 --port 8090 --api-key "" report \
             -o zap-report/zap-report.html -f html
 
       - name: Upload ZAP report

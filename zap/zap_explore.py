@@ -107,7 +107,12 @@ def main():
                 "submit": "Save Changes",
             })
 
-    # 8. Account page
+    # 8. Delete the second task if available (after update, response redirects to all_tasks)
+    task_ids = re.findall(r"/all_tasks/(\d+)/update_task", html)
+    if len(task_ids) >= 2:
+        get(f"{TARGET}/all_tasks/{task_ids[1]}/delete_task")
+
+    # 9. Account page
     html = get(f"{TARGET}/account")
     csrf = get_csrf(html)
     if csrf:
@@ -117,7 +122,7 @@ def main():
             "submit": "Update Info",
         })
 
-    # 9. Change password page
+    # 10. Change password page
     html = get(f"{TARGET}/account/change_password")
     csrf = get_csrf(html)
     if csrf:
@@ -128,8 +133,14 @@ def main():
             "submit": "Change password",
         })
 
-    # 10. Logout
+    # 11. Logout
     get(f"{TARGET}/logout")
+
+    # 12. Try accessing protected page without auth (ZAP records the redirect to login)
+    SESSION.get(f"{TARGET}/all_tasks")
+
+    # 13. Trigger 404 error page
+    SESSION.get(f"{TARGET}/nonexistent-route")
 
     print("Exploration complete. All traffic recorded by ZAP.")
 

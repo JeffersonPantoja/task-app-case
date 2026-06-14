@@ -5,6 +5,7 @@ from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 from flask_bcrypt import Bcrypt
+from werkzeug.serving import WSGIRequestHandler
 
 
 app = Flask(__name__)
@@ -22,12 +23,15 @@ login_manager.login_message_category = 'danger'
 bcrypt = Bcrypt(app)
 
 
+WSGIRequestHandler.server_version = ""
+WSGIRequestHandler.sys_version = ""
+
+
 @app.after_request
 def add_security_headers(response):
-    response.headers['Content-Security-Policy'] = "default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:"
+    response.headers['Content-Security-Policy'] = "default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; frame-ancestors 'none'; form-action 'self'"
     response.headers['X-Frame-Options'] = 'DENY'
     response.headers['X-Content-Type-Options'] = 'nosniff'
-    response.headers.pop('Server', None)
     return response
 
 from todo_project import models

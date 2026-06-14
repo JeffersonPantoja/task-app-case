@@ -211,12 +211,23 @@ jobs:
 
       - name: Generate ZAP report
         run: |
-          curl -X POST "http://127.0.0.1:8090/JSON/reports/action/generate/" \
-            -d "apikey=" \
-            -d "template=traditional-html" \
-            -d "sites=http://web:5000" \
-            -d "reportDir=/zap/wrk/" \
-            -d "reportName=zap-report"
+          docker exec zap python -c "
+          import json, urllib.request
+
+          payload = json.dumps({
+              'template': 'traditional-html',
+              'sites': ['http://web:5000'],
+              'reportDir': '/zap/wrk/',
+              'reportName': 'zap-report',
+          }).encode()
+          req = urllib.request.Request(
+              'http://127.0.0.1:8090/JSON/reports/action/generate/',
+              data=payload,
+              headers={'Content-Type': 'application/json'},
+          )
+          resp = urllib.request.urlopen(req)
+          print(resp.read().decode())
+          "
 
       - name: Upload ZAP report
         if: always()

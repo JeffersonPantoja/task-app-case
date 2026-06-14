@@ -8,8 +8,11 @@ ZAP_URL = "http://127.0.0.1:8090"
 TARGET_URL = "http://web:5000"
 
 def rpc_call(url, data=None):
-    """Função auxiliar para chamadas de API do ZAP"""
-    req = urllib.request.Request(url, data=data)
+    headers = {}
+    if data:
+        headers["Content-Type"] = "application/x-www-form-urlencoded"
+        
+    req = urllib.request.Request(url, data=data, headers=headers)
     try:
         with urllib.request.urlopen(req) as response:
             return json.loads(response.read().decode())
@@ -33,7 +36,6 @@ def monitor_scan(scan_id):
     print(f"Scan ID {scan_id} iniciado. Monitorando progresso...")
     api_url = f"{ZAP_URL}/JSON/ascan/view/status/?scanId={scan_id}"
     
-    # 60 tentativas com 10 segundos de intervalo (10 minutos de timeout)
     for _ in range(60):
         res = rpc_call(api_url)
         progress = res.get("status", "0")
@@ -47,20 +49,6 @@ def monitor_scan(scan_id):
     print("Erro: Timeout aguardando o Active Scan terminar.")
     sys.exit(1)
 
-def generate_report():
-    print("Solicitando geração do relatório HTML...")
-    api_url = f"{ZAP_URL}/JSON/reports/action/generate/"
-    params = urllib.parse.urlencode({
-        "title": "DAST Scan Report",
-        "template": "traditional-html",
-        "reportDir": "/zap/wrk",
-        "reportFile": "zap-report.html"
-    }).encode()
-    
-    res = rpc_call(api_url, data=params)
-    print(f"Relatório gerado: {res}")
-
 if __name__ == "__main__":
     scan_id = start_active_scan()
     monitor_scan(scan_id)
-    generate_report()

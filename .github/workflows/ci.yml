@@ -212,7 +212,7 @@ jobs:
       - name: Generate ZAP report
         run: |
           docker exec zap python -c "
-          import json, urllib.request
+          import json, urllib.request, urllib.error
 
           payload = json.dumps({
               'template': 'traditional-html',
@@ -225,8 +225,13 @@ jobs:
               data=payload,
               headers={'Content-Type': 'application/json'},
           )
-          resp = urllib.request.urlopen(req)
-          print(resp.read().decode())
+          try:
+              resp = urllib.request.urlopen(req)
+              print(resp.read().decode())
+          except urllib.error.HTTPError as e:
+              print(f'Status: {e.code}')
+              print(e.read().decode())
+              raise
           "
 
       - name: Upload ZAP report

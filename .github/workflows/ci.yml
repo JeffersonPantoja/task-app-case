@@ -209,14 +209,21 @@ jobs:
             python:3.12-slim \
             sh -c "pip install -q requests && http_proxy=http://zap:8090 https_proxy=http://zap:8090 python /zap/zap_explore.py"
 
-      - name: Run Active Scan
+      - name: Install zap-cli
+        run: pip install zap-cli
+
+      - name: Spider with zap-cli
         run: |
-          python3 zap/zap_scan.py
+          zap-cli --zap-url http://127.0.0.1:8090 --api-key "" spider http://web:5000
+
+      - name: Run Active Scan with zap-cli
+        run: |
+          zap-cli --zap-url http://127.0.0.1:8090 --api-key "" active-scan http://web:5000
 
       - name: Generate ZAP Report
-        if: always() 
         run: |
-          python3 zap/zap_report.py
+          zap-cli --zap-url http://127.0.0.1:8090 --api-key "" report \
+            -o zap-report/zap-report.html -f html
 
       - name: Upload ZAP report
         if: always()

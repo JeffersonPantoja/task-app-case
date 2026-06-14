@@ -210,7 +210,9 @@ jobs:
             sh -c "pip install -q requests && http_proxy=http://zap:8090 https_proxy=http://zap:8090 python /zap/zap_explore.py"
 
       - name: Install zap-cli
-        run: pip install zapcli
+        run: |
+          pip install zapcli
+          pip install --upgrade urllib3 requests
 
       - name: Spider with zap-cli
         run: |

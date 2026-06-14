@@ -204,13 +204,10 @@ jobs:
 
       - name: Run app exploration script
         run: |
-          # O parâmetro -e força a biblioteca 'requests' do Python a enviar o tráfego pelo ZAP
           docker run --rm --network zap-net \
-            -e http_proxy=http://zap:8090 \
-            -e https_proxy=http://zap:8090 \
             -v ${{ github.workspace }}/zap-scan:/zap-scan:ro \
             python:3.12-slim \
-            sh -c "pip install -q requests && python /zap-scan/explore.py"
+            sh -c "pip install -q requests && http_proxy=http://zap:8090 https_proxy=http://zap:8090 python /zap-scan/explore.py"
 
       - name: Run Active Scan
         run: |

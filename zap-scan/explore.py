@@ -1,4 +1,5 @@
 import re
+import time
 import requests
 import urllib3
 
@@ -34,7 +35,21 @@ def post(url, data):
     return r.text
 
 
+def wait_for_proxy():
+    for i in range(30):
+        try:
+            r = SESSION.get(f"{TARGET}/", timeout=5)
+            print(f"Proxy ready (attempt {i + 1})")
+            return
+        except (requests.ConnectionError, requests.ProxyError):
+            print(f"Waiting for proxy... (attempt {i + 1})")
+            time.sleep(5)
+    raise RuntimeError("ZAP proxy did not become ready in time")
+
+
 def main():
+    wait_for_proxy()
+
     # 1. About page
     get(f"{TARGET}/")
 

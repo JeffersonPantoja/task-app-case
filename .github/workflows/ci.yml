@@ -212,18 +212,17 @@ jobs:
       - name: Generate ZAP report
         run: |
           docker exec zap python -c "
-          import json, urllib.request, urllib.error
+          import urllib.request, urllib.parse, urllib.error
 
-          payload = json.dumps({
+          data = urllib.parse.urlencode({
               'template': 'traditional-html',
-              'sites': ['http://web:5000'],
+              'sites': 'http://web:5000',
               'reportDir': '/zap/wrk/',
               'reportName': 'zap-report',
           }).encode()
           req = urllib.request.Request(
               'http://127.0.0.1:8090/JSON/reports/action/generate/',
-              data=payload,
-              headers={'Content-Type': 'application/json'},
+              data=data,
           )
           try:
               resp = urllib.request.urlopen(req)

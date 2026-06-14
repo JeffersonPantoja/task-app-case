@@ -36,7 +36,7 @@ def generate_report():
     # Deixamos os filtros opcionais vazios ("") para ele processar tudo.
     params = urllib.parse.urlencode({
         "title": "DAST Scan Report",
-        "template": "traditional-html",
+        "template": "html-report",
         "theme": "",
         "description": "",
         "contexts": "",

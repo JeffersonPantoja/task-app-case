@@ -211,27 +211,13 @@ jobs:
 
       - name: Generate ZAP report
         run: |
-          docker exec zap python -c "
-          import urllib.request, urllib.parse, urllib.error
-
-          data = urllib.parse.urlencode({
-              'template': 'traditional-html',
-              'sites': 'http://web:5000',
-              'reportDir': '/zap/wrk/',
-              'reportName': 'zap-report',
-          }).encode()
-          req = urllib.request.Request(
-              'http://127.0.0.1:8090/JSON/reports/action/generate/',
-              data=data,
-          )
-          try:
-              resp = urllib.request.urlopen(req)
-              print(resp.read().decode())
-          except urllib.error.HTTPError as e:
-              print(f'Status: {e.code}')
-              print(e.read().decode())
-              raise
-          "
+          echo "Gerando relatório do ZAP..."
+          curl -s -X POST http://127.0.0.1:8090/JSON/reports/action/generate/ \
+            -d "title=DAST+Scan+Report" \
+            -d "template=traditional-html" \
+            -d "sites=http://web:5000" \
+            -d "reportDir=/zap/wrk" \
+            -d "reportFile=zap-report.html"
 
       - name: Upload ZAP report
         if: always()

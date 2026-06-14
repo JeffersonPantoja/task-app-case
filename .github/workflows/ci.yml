@@ -209,60 +209,9 @@ jobs:
             python:3.12-slim \
             sh -c "pip install -q requests && http_proxy=http://zap:8090 https_proxy=http://zap:8090 python /zap-scan/explore.py"
 
-      - name: Run Active Scan
+      - name: Run Active Scan and Generate Report
         run: |
-          echo "Starting Active Scan on http://web:5000..."
-          # Mudança aqui: enviando os parâmetros via -d em vez de query string na URL
-          scan_response=$(curl -s -X POST http://127.0.0.1:8090/JSON/ascan/action/scan/ \
-            -d "url=http://web:5000" \
-            -d "recurse=true")
-          echo "Scan response: $scan_response"
-          
-          scan_id=$(echo "$scan_response" | python3 -c "
-          import sys, json
-          try:
-              d = json.load(sys.stdin)
-              print(d.get('scan', d.get('scanId', '')))
-          except Exception:
-              print('')
-          ")
-          
-          if [ -z "$scan_id" ]; then
-            echo "Failed to get scan ID. Verify if the site tree is populated."
-            exit 1
-          fi
-          echo "Scan ID: $scan_id"
-
-          for i in $(seq 1 60); do
-            status_response=$(curl -s "http://127.0.0.1:8090/JSON/ascan/view/status/?scanId=$scan_id")
-            progress=$(echo "$status_response" | python3 -c "
-            import sys, json
-            try:
-                print(json.load(sys.stdin).get('status', '0'))
-            except Exception:
-                print('0')
-            ")
-            echo "Progress: $progress%"
-            if [ "$progress" = "100" ]; then
-              echo "Active Scan completed!"
-              break
-            fi
-            if [ "$i" -eq 60 ]; then
-              echo "Timeout waiting for Active Scan"
-              exit 1
-            fi
-            sleep 10
-          done
-
-      - name: Generate ZAP report
-        run: |
-          echo "Gerando relatório do ZAP..."
-          # Omitir o parâmetro 'sites' faz o ZAP trazer tudo da sessão atual sem quebrar por parâmetros ilegais
-          curl -s -X POST http://127.0.0.1:8090/JSON/reports/action/generate/ \
-            -d "title=DAST+Scan+Report" \
-            -d "template=traditional-html" \
-            -d "reportDir=/zap/wrk" \
-            -d "reportFile=zap-report.html"
+          python3 zap-scan/zap_helper.py
 
       - name: Upload ZAP report
         if: always()
